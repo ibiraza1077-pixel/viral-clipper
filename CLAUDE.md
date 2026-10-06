@@ -6,7 +6,9 @@ Local Mac app (Apple Silicon) that turns long videos into vertical short clips w
 
 - App: `.venv/bin/python -m uvicorn app:app --host 127.0.0.1 --port 8765` (or the `viral-clipper` entry in `.claude/launch.json`; users double-click `Start Viral Clipper.command`).
 - CLI: `.venv/bin/python -m clipper <url-or-file> --clips 5` (see `clipper/__main__.py` for flags).
-- No test suite yet. Verify changes by running a short job end to end and checking `output/<job-id>/job.json` and the rendered `.mp4`.
+- Tests: `.venv/bin/python -m pytest -q` (fast, no network or models; they use a temp output folder). Add tests for new logic. CI (`.github/workflows/ci.yml`) runs them plus a Semgrep scan on every push.
+- Tests don't cover downloading, Whisper or rendering. For those, run a short job end to end and check `output/<job-id>/job.json` and the `.mp4`.
+- Dev tools: `uv pip install --python .venv/bin/python -r requirements-dev.txt`.
 
 ## Two Python environments — never mix them
 

@@ -18,3 +18,4 @@ models/
 style-samples/*.mp4
 
 .DS_Store
+.pytest_cache/

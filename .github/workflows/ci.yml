@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    # The tests only need the lightweight packages, so they run on Linux (cheaper and faster than macOS).
+    # Versions come from requirements.txt so CI matches the Mac.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install test dependencies
+        run: |
+          grep -h '==' requirements.txt requirements-dev.txt > constraints.txt
+          pip install -c constraints.txt fastapi python-multipart pydantic python-dotenv static-ffmpeg \
+            opencv-python-headless numpy yt-dlp anthropic pytest httpx
+      - run: python -m pytest -q
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install semgrep
+      - run: semgrep scan --config p/python --config p/fastapi --metrics=off --error
