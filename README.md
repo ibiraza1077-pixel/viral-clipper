@@ -1,6 +1,25 @@
 # Viral Clipper
 
-Paste a video link and get ready-to-post short clips of the moments most likely to go viral: reframed to vertical, centred on the speaker, with animated word-by-word captions.
+[![CI](https://github.com/ibiraza1077-pixel/viral-clipper/actions/workflows/ci.yml/badge.svg)](https://github.com/ibiraza1077-pixel/viral-clipper/actions/workflows/ci.yml)
+
+Paste a video link and get ready-to-post short clips of the moments most likely to go viral: reframed to vertical, centred on the speaker, with animated word-by-word captions. It can also generate original AI-narrated cartoon "story" videos from a topic.
+
+![Viral Clipper interface](docs/ui.jpg)
+
+## Engineering highlights
+
+- **End-to-end ML pipeline on a laptop.** Download (yt-dlp) → speech-to-text with word timestamps (Whisper on Apple Silicon via MLX) → LLM clip selection with structured output (Claude) → face-tracked 9:16 reframing (OpenCV YuNet) → ffmpeg render with ASS karaoke captions.
+- **Generative video.** Claude writes a script, Kokoro TTS voices it, Z-Image-Turbo draws each scene, and Whisper aligns the captions. All of this runs locally on a 16 GB Mac.
+- **Designed around memory limits.** Jobs run one at a time on a single-worker executor. Heavy models run in a separate virtualenv as a subprocess that streams `PROGRESS` lines, and each model is loaded, used and released in turn.
+- **Resilient jobs.** Each job is a folder holding `job.json` (no database), saved on every log line so the UI can poll it live. Errors are written to the job instead of crashing the worker, and unfinished jobs are marked as interrupted on restart.
+- **Two AI backends.** It uses the Anthropic API when a key is set and otherwise falls back to the local `claude` CLI. Malformed model output is retried.
+- **Quality gates.** A pytest suite (no network or models needed) and a Semgrep security scan run in GitHub Actions on every push.
+
+**Stack:** Python, FastAPI, ffmpeg, OpenCV, MLX Whisper, Anthropic API, mflux, mlx-audio, vanilla JS single-page UI.
+
+| Story video frame |
+| --- |
+| <img src="docs/story-frame.png" width="280" alt="Cartoon frame from a generated story video"> |
 
 ## Start it
 
@@ -54,6 +73,15 @@ Results land in `output/<run>/` as `.mp4` files, each with a thumbnail. `job.jso
 
 - **Default:** your installed Claude Code (`claude` command). It uses your Claude subscription, so there's no extra cost.
 - **Claude API:** copy `.env.example` to `.env` and add `ANTHROPIC_API_KEY=...`. Once a key is set, it's used instead.
+
+## Development
+
+```bash
+uv pip install --python .venv/bin/python -r requirements.txt -r requirements-dev.txt
+.venv/bin/python -m pytest -q
+```
+
+Code layout: `app.py` (HTTP API), `clipper/pipeline.py` (job lifecycle), `clipper/download.py`, `transcribe.py`, `picker.py`, `render.py`, `subtitles.py` (clip flow), `clipper/story.py` + `story_worker.py` (story flow), `static/index.html` (UI).
 
 ## Notes
 
