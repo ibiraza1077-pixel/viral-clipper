@@ -21,7 +21,7 @@ Paste a video link and get ready-to-post short clips of the moments most likely 
 
 <img src="docs/story-demo.gif" width="260" alt="First seconds of a generated story video: a cartoon footballer with animated captions" align="left">
 
-This 83-second video was made end to end by Viral Clipper from one line of input, *"Every Level of a Footballer's Career, Part 2"*: Claude wrote the script, Kokoro voiced it, Z-Image-Turbo drew all 11 scenes, Whisper timed the word-by-word captions and ffmpeg assembled it. Everything except the script ran locally on a 16 GB MacBook, at no cost per video.
+This 83-second video was made end to end by Viral Clipper from one line of input, *"Every Level of a Footballer's Career, Part 2"*: Claude wrote the script, Kokoro voiced it, Z-Image-Turbo drew all 9 scenes, Whisper timed the word-by-word captions and ffmpeg assembled it. Everything except the script ran locally on a 16 GB MacBook, at no cost per video.
 
 **[Watch the full video with sound (docs/story-demo.mp4)](docs/story-demo.mp4)**
 
