@@ -1,0 +1,20 @@
+# Environments (rebuild from requirements*.txt)
+.venv/
+.venv-story/
+
+# Secrets
+.env
+
+# Generated
+__pycache__/
+*.pyc
+output/
+
+# Recreated automatically at runtime
+fonts/
+models/
+
+# Large sample renders
+style-samples/*.mp4
+
+.DS_Store

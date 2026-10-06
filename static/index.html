@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Viral Clipper</title>
+<style>
+  :root {
+    --bg: #0b0b0f; --panel: #15151c; --panel2: #1d1d27; --line: #2a2a36;
+    --text: #f2f2f5; --muted: #9a9aab; --accent: #ffe500; --accent-ink: #111;
+    --good: #3ddc84; --bad: #ff5c6c; --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 16px 80px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 28px; }
+  h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
+  h1 span { color: var(--accent); }
+  .pill { font-size: 12px; padding: 4px 10px; border-radius: 99px; background: var(--panel2); color: var(--muted); border: 1px solid var(--line); }
+  .pill.ok { color: var(--good); } .pill.no { color: var(--bad); }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+  .row { display: flex; gap: 10px; }
+  input[type=text], select, input[type=number] {
+    background: var(--panel2); border: 1px solid var(--line); color: var(--text);
+    border-radius: 10px; padding: 12px 14px; font: inherit; outline: none; }
+  input[type=text] { flex: 1; min-width: 0; font-size: 16px; }
+  input:focus, select:focus { border-color: var(--accent); }
+  button { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px;
+           padding: 12px 20px; font: 700 15px inherit; font-family: inherit; cursor: pointer; white-space: nowrap; }
+  button:disabled { opacity: .5; cursor: default; }
+  button.ghost { background: var(--panel2); color: var(--text); border: 1px solid var(--line); font-weight: 500; padding: 8px 12px; font-size: 13px; }
+  .opts { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 14px; color: var(--muted); font-size: 14px; align-items: center; }
+  .opts label { display: flex; align-items: center; gap: 8px; }
+  .opts select, .opts input[type=number] { padding: 7px 10px; }
+  .opts input[type=number] { width: 70px; }
+  textarea { background: var(--panel2); border: 1px solid var(--line); color: var(--text); border-radius: 10px;
+             padding: 12px 14px; font: inherit; outline: none; resize: vertical; width: 100%; }
+  textarea:focus { border-color: var(--accent); }
+  #url { flex: 1; min-width: 0; font-size: 16px; min-height: 50px; height: 50px; }
+  .row button { align-self: flex-start; height: 50px; }
+  details.rules { margin-top: 14px; }
+  details.rules summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+  details.rules summary b { color: var(--accent); font-weight: 600; }
+  details.rules textarea { margin-top: 10px; min-height: 90px; font-size: 14px; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .st { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: var(--panel2); margin-right: 6px; }
+  .st.done { color: var(--good); } .st.error { color: var(--bad); } .st.run { color: var(--accent); }
+  .history div.cur { color: var(--accent); }
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tabs button { background: var(--panel2); color: var(--muted); border: 1px solid var(--line); font-weight: 600; padding: 9px 16px; }
+  .tabs button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid2 label, .field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+  .grid2 input, .field input { font-size: 15px; }
+  @media (max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
+  .drop { margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .drop a { color: var(--text); cursor: pointer; text-decoration: underline; }
+
+  .job { margin-top: 28px; }
+  .job-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+  .job-head h2 { font-size: 18px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar { height: 6px; background: var(--panel2); border-radius: 99px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--accent); transition: width .5s; }
+  .stages { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0 6px; font-size: 12px; }
+  .stages span { padding: 3px 9px; border-radius: 99px; background: var(--panel2); color: var(--muted); }
+  .stages span.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .stages span.done { color: var(--good); }
+  .log { font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); max-height: 120px; overflow: auto; margin-top: 8px; }
+  .err { color: var(--bad); margin-top: 8px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; margin-top: 18px; }
+  .clip { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+  .clip video { width: 100%; aspect-ratio: 9/16; background: #000; display: block; object-fit: contain; }
+  .clip.land video { aspect-ratio: 16/9; }
+  .vwrap { position: relative; }
+  .sz { position: absolute; inset: 0; pointer-events: none; display: none; }
+  body.safe .clip:not(.land) .sz { display: block; }
+  .sz i { position: absolute; background: rgba(255, 60, 90, .35); border: 1px dashed rgba(255,255,255,.6); }
+  .sz .t { left: 0; right: 0; top: 0; height: 14.6%; }          /* 280 / 1920 */
+  .sz .b { left: 0; right: 0; bottom: 0; height: 23.4%; }       /* 450 / 1920 */
+  .sz .r { right: 0; width: 13.9%; top: 38%; bottom: 23.4%; }    /* action buttons */
+  .toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .clip .body { padding: 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .clip h3 { margin: 0; font-size: 15px; line-height: 1.3; }
+  .score { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; }
+  .score b { background: var(--accent); color: var(--accent-ink); padding: 1px 8px; border-radius: 6px; }
+  .meta { font-size: 12px; color: var(--muted); }
+  .reason { font-size: 13px; color: #c9c9d6; }
+  .tags { font-size: 12px; color: var(--accent); }
+  .actions { display: flex; gap: 8px; margin-top: auto; padding-top: 6px; }
+  .actions a { text-decoration: none; }
+
+  .history { margin-top: 44px; }
+  .history h4 { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+  .history div { padding: 10px 0; border-bottom: 1px solid var(--line); cursor: pointer; display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+  .history div:hover { color: var(--accent); }
+  .history small { color: var(--muted); white-space: nowrap; }
+  .empty { color: var(--muted); font-size: 14px; }
+
+  @media (max-width: 600px) { .row { flex-direction: column; } h1 { font-size: 22px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Viral <span>Clipper</span></h1>
+    <span id="ai" class="pill">checking AI…</span>
+  </header>
+
+  <div class="tabs"><button type="button" id="tab-clip" class="on">Clip videos</button><button type="button" id="tab-story">Story video (AI)</button></div>
+
+  <form id="story" class="card" hidden>
+    <div class="grid2">
+      <label>Series<input id="s-series" type="text" value="Every Level of a Footballer's Career"></label>
+      <label>This part is about<input id="s-topic" type="text" placeholder="e.g. Sunday league to semi-pro"></label>
+    </div>
+    <div class="opts">
+      <label>Part <input id="s-part" type="number" min="1" max="50" value="1"></label>
+      <label>Voice
+        <select id="s-voice">
+          <option value="bm_george">George (British, warm)</option>
+          <option value="bm_lewis">Lewis (British, deep)</option>
+          <option value="bm_daniel">Daniel (British, quick)</option>
+          <option value="bf_emma">Emma (British)</option>
+        </select>
+      </label>
+      <button id="s-go" type="submit" style="margin-left:auto">Make video</button>
+    </div>
+    <details class="rules">
+      <summary>Notes for the script writer</summary>
+      <textarea id="s-notes" placeholder="Optional, e.g. &#10;- mention the 2023 academy release figures&#10;- end on a cliffhanger about the Premier League"></textarea>
+    </details>
+    <div class="hint">Claude writes the script, then the voice and pictures are made on this Mac for free. Expect a few minutes per scene for the pictures on a 16 GB Mac.</div>
+  </form>
+
+  <form id="form" class="card">
+    <div class="row">
+      <textarea id="url" rows="1" placeholder="Paste a video link — or many, one per line. Channel and playlist links work too." autocomplete="off"></textarea>
+      <button id="go" type="submit">Make clips</button>
+    </div>
+    <div class="opts">
+      <label>Clips <input id="n" type="number" min="1" max="15" value="5"></label>
+      <label>Format
+        <select id="aspect">
+          <option value="auto">Vertical 9:16 · Auto layout</option>
+          <option value="crop">Vertical 9:16 · Follow face (podcasts, talking)</option>
+          <option value="fit">Vertical 9:16 · Fit whole frame (gaming, edits)</option>
+          <option value="landscape">Landscape 16:9</option>
+        </select>
+      </label>
+      <label>Length
+        <select id="len">
+          <option value="15-45">Short (15–45s)</option>
+          <option value="20-75" selected>Medium (20–75s)</option>
+          <option value="45-120">Long (45–120s)</option>
+        </select>
+      </label>
+      <label title="For channel or playlist links: how many of the latest videos to clip">Per channel <input id="perch" type="number" min="1" max="25" value="5"></label>
+      <label><input id="cap" type="checkbox" checked> Captions</label>
+      <label title="Detects subtitles already burned into the video and cuts them out, so only the new captions show">
+        <input id="rmsubs" type="checkbox"> Remove original subtitles</label>
+    </div>
+    <details class="rules" id="rulesbox">
+      <summary>Campaign rules <b id="rulesflag"></b></summary>
+      <textarea id="rules" placeholder="Paste the campaign's requirements, e.g.&#10;- Max 60 seconds&#10;- Caption must tag @creator and include #ad&#10;- Only clips about money or business, no swearing"></textarea>
+      <div class="hint">The AI follows these when choosing clips and writing captions. Saved in this browser.</div>
+    </details>
+    <div class="drop">…or <a id="pick">upload a video file</a> <input id="file" type="file" accept="video/*" hidden></div>
+  </form>
+
+  <section id="job" class="job" hidden></section>
+
+  <section class="history">
+    <h4 id="histtitle">Previous runs</h4>
+    <div id="hist" style="display:block;cursor:default;border:0;padding:0"></div>
+  </section>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const STAGES = [["downloading","Download"],["transcribing","Transcribe"],["picking","Find viral moments"],["rendering","Render"],["done","Done"]];
+const STORY_STAGES = [["writing","Write script"],["voicing","Voice"],["drawing","Draw scenes"],["rendering","Render"],["done","Done"]];
+
+function setTab(story) {
+  $("#story").hidden = !story; $("#form").hidden = story;
+  $("#tab-story").classList.toggle("on", story); $("#tab-clip").classList.toggle("on", !story);
+  try { localStorage.setItem("tab", story ? "story" : "clip"); } catch {}
+}
+$("#tab-clip").onclick = () => setTab(false);
+$("#tab-story").onclick = () => setTab(true);
+try { if (localStorage.getItem("tab") === "story") setTab(true); } catch {}
+
+$("#story").onsubmit = async e => {
+  e.preventDefault();
+  const topic = $("#s-topic").value.trim();
+  if (!topic) return $("#s-topic").focus();
+  $("#s-go").disabled = true;
+  const r = await fetch("/api/story", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ topic, series: $("#s-series").value.trim(), part: +$("#s-part").value || 1,
+                           voice: $("#s-voice").value, notes: $("#s-notes").value }) });
+  $("#s-go").disabled = false;
+  if (!r.ok) return alert((await r.json()).detail || "Something went wrong");
+  $("#s-topic").value = ""; $("#s-part").value = (+$("#s-part").value || 1) + 1;
+  watch((await r.json()).id); loadHistory();
+};
+let timer = null, current = null, histTimer = null;
+
+fetch("/api/status").then(r => r.json()).then(s => {
+  const el = $("#ai");
+  el.textContent = s.ai === "none" ? "No AI connected" : "AI: " + s.ai;
+  el.classList.add(s.ai === "none" ? "no" : "ok");
+});
+
+function opts() {
+  const [min_len, max_len] = $("#len").value.split("-").map(Number);
+  return { num_clips: +$("#n").value || 5, aspect: $("#aspect").value, captions: $("#cap").checked, remove_subs: $("#rmsubs").checked,
+           min_len, max_len, instructions: $("#rules").value.trim() };
+}
+
+try { $("#rules").value = localStorage.getItem("rules") || ""; } catch {}
+const rulesFlag = () => $("#rulesflag").textContent = $("#rules").value.trim() ? "· on" : "";
+rulesFlag();
+$("#rules").oninput = () => { try { localStorage.setItem("rules", $("#rules").value); } catch {} rulesFlag(); };
+$("#url").onkeydown = e => { if (e.key === "Enter" && !e.shiftKey && !$("#url").value.includes("\n")) { e.preventDefault(); $("#form").requestSubmit(); } };
+$("#url").oninput = () => { const t = $("#url"); t.style.height = "50px"; t.style.height = Math.min(t.scrollHeight + 2, 260) + "px"; };
+
+$("#form").onsubmit = async e => {
+  e.preventDefault();
+  const urls = $("#url").value.split(/[\s,]+/).filter(Boolean);
+  if (!urls.length) return $("#url").focus();
+  $("#go").disabled = true; $("#go").textContent = "Queuing…";
+  const r = await fetch("/api/batch", { method: "POST", headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ urls, per_channel: +$("#perch").value || 5, ...opts() }) });
+  $("#go").disabled = false; $("#go").textContent = "Make clips";
+  if (!r.ok) return alert((await r.json()).detail || "Something went wrong");
+  const { jobs } = await r.json();
+  $("#url").value = ""; $("#url").oninput();
+  watch(jobs[0].id);
+  loadHistory();
+};
+
+$("#pick").onclick = () => $("#file").click();
+$("#file").onchange = async () => {
+  const f = $("#file").files[0]; if (!f) return;
+  const fd = new FormData(); fd.append("file", f);
+  for (const [k, v] of Object.entries(opts())) fd.append(k, v);
+  $("#job").hidden = false; $("#job").innerHTML = `<div class="card">Uploading ${esc(f.name)}…</div>`;
+  const r = await fetch("/api/upload", { method: "POST", body: fd });
+  $("#file").value = "";
+  watch((await r.json()).id);
+};
+
+function watch(id) {
+  clearInterval(timer);
+  const tick = async () => {
+    const j = await (await fetch("/api/jobs/" + id)).json();
+    render(j);
+    if (j.status === "done" || j.status === "error") { clearInterval(timer); loadHistory(true); }
+  };
+  tick(); timer = setInterval(tick, 1500);
+  $("#job").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function render(j) {
+  current = j.id;
+  const ST = j.options.kind === "story" ? STORY_STAGES : STAGES;
+  const idx = ST.findIndex(s => s[0] === j.status);
+  const stages = ST.map(([k, label], i) =>
+    `<span class="${k === j.status ? "on" : (idx > i || j.status === "done") ? "done" : ""}">${label}</span>`).join("");
+  const log = j.log.slice(-6).map(l => esc(l.msg)).join("<br>");
+  const land = j.options.aspect === "landscape" ? "land" : "";
+  const clips = j.clips.map(c => `
+    <div class="clip ${land}">
+      <div class="vwrap">
+        <video src="/output/${j.id}/${c.file}" poster="/output/${j.id}/${c.thumb}" controls preload="none" playsinline></video>
+        <div class="sz"><i class="t"></i><i class="r"></i><i class="b"></i></div>
+      </div>
+      <div class="body">
+        <span class="score">${c.score == null ? "" : `<b>${c.score}</b> viral score `}<span class="meta">· ${c.duration}s${j.options.kind === "story" ? "" : " · from " + fmt(c.start)}</span></span>
+        ${c.original_subs ? `<span class="meta">Original subtitles ${esc(c.original_subs)}</span>` : ""}
+        <h3>${esc(c.title)}</h3>
+        <div class="reason">${esc(c.reason)}</div>
+        <div class="tags">${c.hashtags.map(h => "#" + esc(h.replace(/^#/, ""))).join(" ")}</div>
+        <div class="actions">
+          <a href="/output/${j.id}/${c.file}" download><button class="ghost">Download</button></a>
+          <button class="ghost" data-copy="${attr(c.caption + "\n\n" + c.hashtags.map(h => "#" + h.replace(/^#/, "")).join(" "))}">Copy caption</button>
+        </div>
+      </div>
+    </div>`).join("");
+  $("#job").hidden = false;
+  $("#job").innerHTML = `
+    <div class="card">
+      <div class="job-head"><h2>${esc(j.title || j.source)}</h2>
+        <span class="meta" style="display:flex;gap:14px;align-items:center">
+          ${j.clips.length && j.options.aspect !== "landscape" ? `<label class="toggle" title="Red = where TikTok, Reels and Shorts put their buttons and text"><input type="checkbox" class="sztoggle" ${document.body.classList.contains("safe") ? "checked" : ""}> Show safe zones</label>` : ""}
+          ${j.status === "done" ? j.clips.length + " clips" : j.progress + "%"}</span></div>
+      <div class="bar"><i style="width:${j.progress}%"></i></div>
+      <div class="stages">${stages}</div>
+      ${j.status !== "done" ? `<div class="log">${log}</div>` : ""}
+      ${j.error ? `<div class="err">${esc(j.error)}</div>` : ""}
+      ${j.error && j.options.kind === "story" ? `<button class="ghost" data-retry="${j.id}" style="margin-top:10px">Retry (keeps finished pictures)</button>` : ""}
+    </div>
+    <div class="grid">${clips}</div>`;
+}
+
+document.addEventListener("change", e => {
+  if (e.target.classList.contains("sztoggle")) document.body.classList.toggle("safe", e.target.checked);
+});
+
+document.addEventListener("click", async e => {
+  const r = e.target.closest("[data-retry]");
+  if (r) {
+    r.disabled = true;
+    const res = await fetch(`/api/jobs/${r.dataset.retry}/retry`, { method: "POST" });
+    if (!res.ok) { r.disabled = false; return alert((await res.json()).detail || "Couldn't retry"); }
+    watch(r.dataset.retry); loadHistory(); return;
+  }
+  const b = e.target.closest("[data-copy]"); if (!b) return;
+  navigator.clipboard.writeText(b.dataset.copy);
+  b.textContent = "Copied!"; setTimeout(() => b.textContent = "Copy caption", 1200);
+});
+
+async function loadHistory(followQueue) {
+  const jobs = await (await fetch("/api/jobs")).json();
+  const active = jobs.filter(j => j.status !== "done" && j.status !== "error");
+  const queued = active.filter(j => j.status === "queued").length;
+  $("#histtitle").textContent = active.length ? `Queue · ${active.length - queued} running, ${queued} waiting` : "Previous runs";
+  $("#hist").innerHTML = jobs.length ? jobs.map(j => {
+    const st = j.status === "done" ? `<span class="st done">${j.clips.length} clips</span>`
+             : j.status === "error" ? `<span class="st error">failed</span>`
+             : j.status === "queued" ? `<span class="st">waiting</span>` : `<span class="st run">${j.progress}%</span>`;
+    return `<div data-id="${j.id}" class="${j.id === current ? "cur" : ""}"><span>${st}${esc(j.title || j.source)}</span>
+    <small>${new Date(j.created * 1000).toLocaleString()}</small></div>`; }).join("")
+    : `<p class="empty">Nothing yet. Paste a link above to get started.</p>`;
+  $("#hist").querySelectorAll("[data-id]").forEach(el => el.onclick = () => watch(el.dataset.id));
+  // when the job on screen finishes, move on to the next one in the queue
+  if (followQueue) {
+    const next = active.find(j => j.status !== "queued") || active[active.length - 1];
+    if (next && next.id !== current) watch(next.id);
+  }
+  clearTimeout(histTimer);
+  if (active.length) histTimer = setTimeout(() => loadHistory(), 3000);
+}
+loadHistory();
+
+function fmt(s) { s = Math.floor(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function attr(s) { return esc(s).replace(/'/g, "&#39;").replace(/\n/g, "&#10;"); }
+</script>
+</body>
+</html>
